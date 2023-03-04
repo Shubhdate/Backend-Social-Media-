@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Clone</title>
+</head>
+<body>
+    <center><h1><b>Instagram clone - React MERN Stack project 6 pack Programmer</b></h1></center>
+
+
+    <center>
+        <h3><b>Backend</b></h3>
+    </center>
+
+    
+    we will here ceate fontend along with backend 
+    
+    Backend - Node.js , express , mongoDB
+
+    step1)create backend so for that installing required modeules 
+    npm i
+    npm i express mongoose dotenv nodemon
+    and for running server with the help of nodemon we have to make an changes in package.json 
+    <!--
+    {
+  "main": "Server.js",
+  "scripts": {
+    "dev":"nodemon Backend/Server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongoose": "^6.10.0",
+    "nodemon": "^2.0.20"
+  }
+}
+    -->
+    now make an frontend and Backend folder 
+    now in Backend maken an app.js and server.js file 
+
+    step2)lets make an server in app.js 
+    before that amek an Config folder in Backend and config.env and Database.js file inside it 
+
+    now lets make an server 
+    from app.js
+    <!--
+        const express = require("express")
+const app = express()
+
+require("dotenv").config({path:"Backend/Config/config.env"})
+
+module.exports = app
+    -->
+
+    from server.js 
+    <!--
+        const app = require("./App")
+
+app.listen(process.env.PORT, () => {
+    console.log(`Server is running on PORT ${process.env.PORT}`)
+})
+    -->
+
+    from config.env 
+    <!--PORT = 4000-->
+
+    now to run type <strong>npm run dev</strong> in terminal and the output will be=>
+    Server is running on PORT 4000
+
+    step3)lets connect database with server.js 
+    from Database.js 
+    <!--
+    //this is for coonecting Databse with server
+    const mongoose = require("mongoose")
+
+    exports.connectDatabase = () => {
+        mongoose.connect(process.env.MONGO_URL)
+        .then((con) => console.log(`Database is Connected : ${con.connection.host}`))
+        .catch((error) => console.log(error))
+    }
+    -->
+
+    from server.js 
+    <!--
+        //this is for coonecting Databse with server
+const {connectDatabase} = require("./Config/Database")
+connectDatabase();
+    -->
+
+    from config.env 
+    <!--
+        //this is for coonecting Databse with server
+MONGO_URL = 'mongodb://localhost:27017/InstagramClone'
+    -->
+
+    fom app.js 
+    <!--
+        if(process.env.NODE_ENV !== "Production"){
+    require("dotenv").config({path:"Backend/Config/config.env"})
+}
+    -->
+    after this we will get in terminal as an output =>
+    Server is running on PORT 4000
+    Database is Connected : localhost
+
+    step4)now lets api before that  for api we have to amke modules for an api in mongodb 
+    maken an fiolder of Model and in that Post.js,User.js file name
+
+    from Post.js 
+    <!--
+        const mongoose = require("mongoose")
+
+const PostSchema = new mongoose.Schema({
+    //in this whart we required in post depend from u 
+    caption:String,
+    imageUrl:{
+        publiv_id:String,
+        url:String
+    },
+    owner:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now,
+    },
+    likes:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    }],
+    comments:[{
+        user:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref:"User"
+        },
+        comment:{
+            type:String,
+            required:true
+        }
+    }]
+})
+
+
+module.exports = mongoose.model("Post",PostSchema)
+    -->
+
+    from User.js 
+    <!--
+
+        const mongoose = require("mongoose")
+
+const UserSchema = new mongoose.Schema({
+    //this is for users informaton what we wnat
+    name:{
+        type:String,
+        required:[true,"Please Enter your FullName"]
+    },
+    email:{
+        type:String,
+        required:[true,"Please Enter your Email"],
+        unique:[true,"Email already exist"]
+    },
+    password:{
+        type:String,
+        required:[true,"Please Enter Pasword"],
+        minlength:[4,"Password should be of 4 letters/number/etc"],
+        select:false,
+    },
+    posts:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Post',
+    }],
+    followers:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+    }],
+    following:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+    }],
+    avatar:{
+        publiv_id:String,
+        url:String
+    }
+})
+
+module.exports = mongoose.model("User",UserSchema)
+    -->
+
+    since we have made what we want from users for login and post purpose
+    Now lets maken an API 
+    for that we have to make an Controllers and Routes folder in Backend 
+    after that we hacve to maken Post.js,User.js in Controllers folder and also in Routes
+
+    for Post.js\Routes we ahve to make routes 
+    <!--
+        const express = require("express")
+    const { createPost } = require("../Controllers/Post")
+    const router = express.Router()
+
+    router.route("/post/upload").post(createPost)
+
+    module.exports = router
+    -->
+
+    from Post.js\controllers 
+    <!--
+    const Post = require("../Models/Post")
+    exports.createPost = async(req,res) => {
+        try {
+            const newPostData = {
+                caption:req.body.caption,
+                image:{
+                    public_id:'req.body.publiv_id',
+                    url:'req.body.url'
+                },
+                owner:req.user._id
+            }
+
+            const newPost = await Post.create(newPostData)
+            res.status(201).json({
+                sucess:true,
+                post:newPost
+            })
+        } 
+        catch (error) {
+            res.status(500).json({
+                sucess:false,
+                mesage:error.message
+            })
+        }
+    }
+    -->
+
+    from app.js ie imporing all routes 
+    <!--
+        //using middleware here 
+    app.use(express.json())
+    app.use(express.urlencoded({extended:true}))
+
+
+    //IMPORTING ALL routes 
+    const post = require("./Routes/Post")
+
+    //using routes here
+    app.use("/api/v1",post)
+    -->
+
+    simalryly we will do this for user.js ie for registering new user and login in 
+    from User.js\routes
+    <!--
+        const express = require("express")
+    const { register } = require("../Controllers/User")
+
+    const router = express.Router()
+
+    router.route("/register").post(register)
+
+    module.exports = router
+    -->
+
+    from User.js/controllers 
+    <!--
+        const User = require("../Models/User")
+
+exports.register = async(rerq,res) => {
+    try {
+        const {name,email,password} = req.body
+
+        //agar user pahile se preesent hai
+        let user = await User.findOne({email})
+        if(user) 
+        {
+            return res.status(201).json({
+                sucess:true,
+                message:"User already present"
+            })
+        }
+
+        //agar user nahi present hai to new user bano do
+        user = await User.create({
+            email,
+            name,
+            password,
+            avatar:{public_id:"sample_id",url:"smapleurl"}
+        })
+
+        return res.status(201).json({
+            sucess:true,
+            message:"New User created"
+        })
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+    -->
+
+    from app.js 
+    <!--
+        //IMPORTING ALL routes 
+const post = require("./Routes/Post")
+const user = require("./Routes/User")
+    -->
+
+    now we have to test it so thats why we are going to use <strong>Postman</strong> for that purpose
+    open postman and then go in collection and make an new collection in my case i named it InstagramClone 
+    now go to make an new request and in that type this url:http://localhost:4000/api/v1/register
+    after that in body section go to json and type this :
+    {
+        "name":"Shub2ham",
+        "email":"abc2@gmail.com",
+        "password":"1234"
+    }
+
+    after that type send 
+    and u will get thsi as output :
+    {
+        "sucess": true,
+        "user": {
+            "name": "Shub2ham",
+            "email": "abc2@gmail.com",
+            "password": "1234",
+            "posts": [],
+            "followers": [],
+            "following": [],
+            "avatar": {
+                "url": "smapleurl"
+            },
+            "_id": "63faf2b5f6515611a45b6150",
+            "__v": 0
+        }
+    }
+
+    and again if u type send then this:
+    {
+        "sucess": true,
+        "message": "User already present"
+    }
+
+    now since our user has registerded lets go to mongodbcompass and connect it 
+    u can see there is our InsatagrmClone name aleady present and in that we will get our new user information this is our database 
+
+
+    as u can see we can see pasword that is wrong method we should encrpt password before sending so lets do this 
+    npm i bcrypt jsonwebtoken
+    before saving password we should hash our password 
+
+    go to User.js/model 
+
+    <!--
+        const bcrypt = require("bcrypt")
+        // this is for saving password as bcrypt and by hasing method
+        UserSchema.pre("save", async function (next) {
+            if(this.isModified("password")){
+                this.password = await bcrypt.hash(this.password, 10)
+                //10 means utna strong password banega 
+            }
+            next()
+        })
+    -->
+    and once agin if we send once again in postman we can see our password is in dcrypt form 
+
+
+    step6)now since our work for register is completed now lets amken for login 
+    for that we are going to use jsonwebtoken 
+    this will geearte token adn we will store that token in form of cookies to veriy if user is presnet or not 
+
+    from user.js\controllers
+    <!--
+        //this is for login existing users 
+exports.login = async(req,res) => {
+    try {
+        const {email,password} = req.body
+
+        const user = await User.findOne({email}).select("+password")
+
+        if(!user){
+            return res.status(201).json({
+                sucess:false,
+                message:"User nahi hai"
+            })
+        }
+        const isMatch = await user.matchPassword(password)
+
+        if(!isMatch){
+            return res.status(400).json({
+                sucess:true,
+                message:"Password galat hai"
+            })
+        }
+
+        const token = await user.generateToken()
+        res.status(201).cookie("token",token).json({
+            sucess:true,
+            // message:"User present hai"
+            user,
+            token
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+    -->
+
+    from User.js\models 
+    <!--
+        
+const jwt = require("jsonwebtoken")
+        //for login 
+UserSchema.methods.matchPassword = async function (password) {
+    //comparing the users password with our hash password 
+    return await bcrypt.compare(password, this.password)
+}
+
+UserSchema.methods.generateToken = function (){
+    return jwt.sign({_id:this._id}, process.env.JWT_SECRET)
+}
+    -->
+
+    from User.js/routes 
+    <!--router.route("/login").post(login)-->
+
+    note:JWT_SECRET in config.env should be any words but it should be strong ha  
+
+    to check go to postman and in that maen new request of :http://localhost:4000/api/v1/login
+    and in body > json section 
+    {
+        "email":"413@gmail.com",
+        "password":"1234"
+    }
+
+    and u will get this if user si  presenta 
+    <!--
+        {
+    "sucess": true,
+    "user": {
+        "avatar": {
+            "url": "smapleurl"
+        },
+        "_id": "63faf5bd717abb0087c6a453",
+        "name": "Shub2ham",
+        "email": "413@gmail.com",
+        "password": "$2b$10$NFcgtG61Xg3383gLu3HKXOqccyc3jIQNIP2IpW9PqJ0wSUh5kFiJ6",
+        "posts": [],
+        "followers": [],
+        "following": [],
+        "__v": 0
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2M2ZhZjViZDcxN2FiYjAwODdjNmE0NTMiLCJpYXQiOjE2NzczOTI5NDR9.p8NCQpQ_LywilZyM2jVIz6v96pEys7wyMs4EIZLzeKk"
+}
+    -->
+
+
+    if not then this
+    {
+        "sucess": true,
+        "message": "Password galat hai"
+    }
+    OR
+    {
+        "sucess": false,
+        "message": "User nahi hai"
+    }
+
+    now to valid this token for 90 days 
+    means agra 90 days mein login ngi liya toh delete karo 
+    <!--
+         const token = await user.generateToken()
+        res.status(201).cookie("token",token, {
+            expires: new Date(Date.now() + 90 + 24 + 60 + 60 + 1000),//this for expiring of cookies
+            httpOnly:true,
+        })
+        .json({
+            sucess:true,
+            // message:"User present hai"
+            user,
+            token
+        })
+    -->
+
+    agar new register ho lekin uske sath hame jaise hee woh new user register karega uske sath login bhi ho jana chaiye for that 
+    just copy token and paste it in register 
+    from user.js/controllers 
+    <!--
+        //agar user nahi present hai to new user bano do
+        user = await User.create({
+            email,
+            name,
+            password,
+            avatar:{public_id:"sample_id",url:"smapleurl"}
+        })
+
+        const token = await user.generateToken()
+        res.status(201).cookie("token",token, {
+            expires: new Date(Date.now() + 90 + 24 + 60 + 60 + 1000),//this for expiring of cookies
+            httpOnly:true,
+        })
+        .json({
+            sucess:true,
+            // message:"User registerded hogya"
+            user,
+            token
+        })
+    -->
+
+    step7)making of post create method
+    before that we have to chcek age user authenticate hai toh hee woh createpost kar saketa hae 
+    with the help of middleware and handdlere 
+    for that make an midddleware folder and in that auth.js file 
+
+    usekele liye token leleo of user and 
+    for that  install npm i cookie-parser
+
+
+    from Auth.js/middleware 
+    <!--
+        const User = require("../Models/User")
+const jwt = require("jsonwebtoken")
+
+exports.isAuthenticated = async (req,res,next) => {
+    try {
+        const {token} = req.cookies 
+        
+        if(!token) {
+            return res.status(401).json({
+                message:"phele login karo fir post bana sakte ho"
+            })
+        }
+
+        const decoded = await jwt.verify(token, process.env.JWT_SECRET)
+        req.user = await User.findById(decoded._id)
+        next()
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+    -->
+
+    from Post.js/routes 
+    <!--
+router.route("/post/upload").post(isAuthenticated,createPost)-->
+
+from Post.js/controllers 
+<!--
+    const Post = require("../Models/Post")
+const User = require("../Models/User")
+
+exports.createPost = async(req,res) => {
+    try {
+        const newPostData = {
+            caption:req.body.caption,
+            image:{
+                public_id:'req.body.public_id',
+                url:'req.body.url'
+            },
+            owner:req.user._id
+        }
+
+        // const newPost = await Post.create(newPostData)
+        const post = await Post.create(newPostData)
+
+        //this is for send id to posts 
+        const user = await User.findById(req.user._id)
+        // user.posts.push(newPost._id)
+        user.posts.push(post._id)
+        await user.save()
+
+        res.status(201).json({
+            sucess:true,
+            // post:newPost
+            post
+        })
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+now go to postman and make a new request of:http://localhost:4000/api/v1/post/upload
+now send that 
+before that u must login ha 
+
+note u will get this as output
+{
+    "sucess": true,
+    "post": {
+        "caption": "Hello",
+        "owner": "63fb609d1ff9fe72c7ddc1a4",
+        "likes": [],
+        "_id": "63fb61236958f3b2032fe4cb",
+        "createdAt": "2023-02-26T13:39:47.744Z",
+        "comments": [],
+        "__v": 0
+    }
+}
+
+note u will get error just make changes in 
+User.js/controllers 
+<!--expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),//this for expiring of cookies-->
+this error because everytime we login the ccookies gets expires 
+so just make changes inthis both ha register an login also 
+
+
+
+now lets make likes and unlike a post 
+from Post.js/contollers 
+<!--
+    
+//this is for liking and unliking the post
+exports.likeandUnlikePost = async(req,res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+
+        if(!post){
+            res.status(500).json({
+                sucess:false,
+                message:"Post not found"
+            })
+        }
+
+        if(post.likes.includes(req.user._id)){
+            const index  = post.likes.indexOf(req.user._id)
+            post.likes.splice(index,1)
+            await post.save()
+
+            res.status(201).json({
+                sucess:true,
+                // post:newPost
+                message:"Post Unlike hogyi"
+            })
+        }
+        else{
+             post.likes.push(req.user._id)
+            await post.save()
+            res.status(201).json({
+                sucess:true,
+                // post:newPost
+                message:"Post like hogyi"
+            })
+        }
+
+       
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from Post.js/Routes
+<!--
+const { createPost, likeandUnlikePost } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").post(isAuthenticated,likeandUnlikePost)
+module.exports = router
+-->
+now go to postmain make an new request :http://localhost:4000/api/v1/post/<ObjectId> konsa bhi
+now u will get this output:
+{
+    "sucess": true,
+    "message": "Post like hogyi"
+}
+and if u don send once agiain 
+{
+    "sucess": true,
+    "message": "Post Unlike hogyi"
+}
+
+
+
+
+now lets mae an delete post 
+from post.js/controllers
+<!--
+    //this is for deleting a post
+exports.deletePost = async(req,res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+
+        if(!post){
+            res.status(500).json({
+                sucess:false,
+                message:"Post not found"
+            })
+        }
+
+        if(post.owner.toString() !== req.user._id.toString()){
+            res.status(400).json({
+                sucess:false,
+                message:"Unauthorized"
+            })
+        }
+        await post.remove()
+
+        const user = await User.findById(req.user._id)
+        const index = user.posts.indexOf(req.params.id)
+        user.posts.slice(index,1)
+        await user.save()
+
+        res.status(200).json({
+            sucess:true,
+            message:"Post delete hogyi"
+        })
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from Post.js/routes
+<!--
+    const express = require("express")
+const { createPost, likeandUnlikePost, deletePost } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").get(isAuthenticated,likeandUnlikePost)
+router.route("/post/:id").delete(isAuthenticated,deletePost)
+
+module.exports = router
+-->
+now go to postman and in that just select new request :http://localhost:4000/api/v1/post/post ka id
+and u will get this as output:
+{
+    "sucess": true,
+    "message": "Post delete hogyi"
+}
+
+
+
+
+
+now make for followers, the post will show to followers only 
+from User.js/controllers 
+<!--
+    
+//this is for followers post 
+exports.followUser = async(req,res) => {
+    try {
+        const userToFollow = await User.findById(req.params.id)
+        const loggedInUser = await User.findById(req.user._id)
+
+        if(!userToFollow){
+            return res.status(500).json({
+                sucess:false,
+                message:"User not found"
+            })
+        }
+
+        if(loggedInUser.following.includes(userToFollow._id)){
+
+            const indexFollowing = loggedInUser.following.indexOf(userToFollow._id)
+            const indexFollowers = userToFollow.followers.indexOf(loggedInUser._id)
+
+            loggedInUser.following.splice(indexFollowing,1)
+            userToFollow.followers.splice(indexFollowers,1)
+
+            await loggedInUser.save()
+            await userToFollow.save()
+
+            return res.status(200).json({
+                sucess:true,
+                message:"User Ufollowed"
+            })
+        }
+        else{
+            loggedInUser.following.push(userToFollow._id)
+            userToFollow.followers.push(loggedInUser._id)
+            await loggedInUser.save()
+            await userToFollow.save()
+
+            return res.status(201).json({
+                sucess:true,
+                message:"User followed"
+            })
+        }
+ 
+        
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+from User.js/routes
+<!--
+    const express = require("express")
+const { register, login, followUser } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+
+module.exports = router
+-->
+
+and in postman make an new request of :http://localhost:4000/api/v1/follow/object id of another
+and u will get this as output:
+{
+    "sucess": true,
+    "message": "User followed"
+}
+and once agin if u send it then this:
+{
+    "sucess": true,
+    "message": "User Ufollowed"
+}
+
+
+
+
+now agar hamne kisko follow kiy ahi hame abh uski post dikhni chaiye toh uske liye 
+from Post.js/controllers
+<!--
+//if someone follow anyone then we have to see its posts 
+exports.getPostFollowing = async(req,res) => {
+    try {
+        // method1
+        // const user = await User.findById(req.user._id).populate("following","posts")
+        // res.status(200).json({
+        //     sucess:true,
+        //     following:user.following
+        // })
+
+        // method2
+        const user = await User.findById(req.user._id)
+        user.following
+        const posts = await Post.find({
+            owner:{
+                $in: user.following
+            }
+        })
+        res.status(200).json({
+            sucess:true,
+            posts
+        })
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+from Post.js/routes
+<!--
+const express = require("express")
+const { createPost, likeandUnlikePost, deletePost, getPostFollowing } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").get(isAuthenticated,likeandUnlikePost)
+router.route("/post/:id").delete(isAuthenticated,deletePost)
+router.route("/posts").get(isAuthenticated,getPostFollowing)
+
+module.exports = router
+-->
+
+now make an new request in postman :http://localhost:4000/api/v1/posts 
+u will get this as an output:
+{
+    "sucess": true,
+    "posts": []
+}
+
+note posts are empty beacuse we dont have any post of following one 
+agar uska koi post hota toh then output:
+{
+    "sucess": true,
+    "posts": [
+        {
+            "_id": "63fcc0fcfd555a516adb7f9d",
+            "caption": "1234",
+            "owner": "63fcbc521cd91e5e3cd4e0df",
+            "likes": [],
+            "createdAt": "2023-02-27T14:41:00.305Z",
+            "comments": [],
+            "__v": 0
+        }
+    ]
+}
+
+
+
+
+now make of logout karne keliye 
+from User.js/controllers 
+<!--
+
+//this is for logging out
+exports.loggedOut = async(req,res) => {
+    try {
+        
+        res.status(200).cookie("token",null,
+        {expires: new Date(Date.now()),
+        httpOnly:true}).json({
+            sucess:true,
+            message:"logged out"
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from User.js/Routes 
+<!-- const express = require("express")
+const { register, login, followUser, loggedOut } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+
+module.exports = router -->
+
+now go to postman and make an new request :http://localhost:4000/api/v1/logout 
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "logged out"
+}
+
+to verify u can go to create post after logging out and u will get this:
+{
+    "message": "phele login karo fir post bana sakte ho"
+}
+
+
+
+now updatedPassword keliye 
+from User.js/controllers 
+<!--
+//updating newPassword
+exports.updatePassword = async(req,res) => {
+    try {
+        
+        const user = await User.findById(req.user._id).select("+password")
+        const {oldPassword, newPassword} = req.body 
+        
+
+        if(!oldPassword || !newPassword){
+            return res.status(500).json({
+                sucess:false,
+                message:"kuch toh type karo password"
+            })
+        }
+
+        const isMatch =  await user.matchPassword(oldPassword)
+        
+        if(!isMatch){
+            res.status(500).json({
+                sucess:false,
+                message:"INCORRECT OLD PASSWORD HAI"
+            })
+        }
+
+        user.password = newPassword
+        await user.save()
+
+        return res.status(200).json({
+            sucess:true,
+            message:"NEW PASSWORD UPDATED"
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+
+-->
+
+from User.js/routes
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/update/password
+and then in body type:
+{
+    "oldPassword":"1234",
+    "newPassword":"12345"
+}
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "NEW PASSWORD UPDATED"
+}
+
+agar bas khali kuch bhi nhi type kiya toh:
+{
+    "sucess": false,
+    "message": "kuch toh type karo password"
+}
+
+
+now for updating Profile 
+from User.js/controllers
+<!--
+    //updatingProfile
+exports.updateProfile = async(req,res) => {
+    try {
+        
+        const user = await User.findById(req.user._id)
+        const {email,name} = req.body 
+
+        if(name){
+            user.name = name
+        }
+        if(email){
+            user.email = email
+        }
+        await user.save()
+        return res.status(200).json({
+            sucess:true,
+            message:"PROFILE UPDATED"
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from user.js/routes 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/update/profile
+and then in body type:
+{
+    "name":"abcd",
+    "email":"abcd@gmail.com"
+}
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "PROFILE UPDATED"
+}
+and to verify u can go to mongodbcompass and u can see there the name and password has been updated 
+
+
+
+now for updating Password 
+from post.js/controllers 
+<!--
+    //updating Captions
+exports.updateCaptions = async(req,res) => {
+    try {
+       
+        const post = await Post.findById(req.params.id)
+        if(!post){
+            res.status(500).json({
+                sucess:false,
+                message:"Post not found"
+            })
+        }
+
+        if(post.owner.toString() !== req.user._id.toString()){
+            res.status(500).json({
+                sucess:false,
+                message:"Unauthorized"
+            })
+        }
+
+
+        post.caption = req.body.caption
+        await post.save()
+        return res.status(200).json({
+            sucess:true,
+            message:"POST UPDATED"
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from Post.js/routes 
+<!--
+    const express = require("express")
+const { createPost, likeandUnlikePost, deletePost, getPostFollowing, updateCaptions } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").get(isAuthenticated,likeandUnlikePost)
+router.route("/post/:id").delete(isAuthenticated,deletePost)
+router.route("/posts").get(isAuthenticated,getPostFollowing)
+router.route("/post/:id").put(isAuthenticated, updateCaptions)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/post:/post ka id
+and then in body type:
+{
+    "caption":"updated post caption"
+}
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "POST UPDATED"
+}
+
+
+
+
+now deleteUser ke liye
+from User.js/controllers 
+<!--
+const Post = require("../Models/Post")
+const { post } = require("../Routes/User")
+//deleteUser
+//deleteUser
+exports.deleteUser = async(req,res) => {
+    try {
+        
+        const user = await User.findById(req.user._id)
+        await user.remove()
+
+        //deleting all posts after removing of profile
+        const posts = user.posts
+        for(let i =0; i < posts.length; i++){
+            const post = await Post.findById(posts[i])
+            await post.remove()
+        }
+
+        //delete all followers ke following ki list associate with it 
+        const followers = user.followers
+        const userId = user._id
+        for(let i =0; i < followers.length; i++){
+            const follower = await User.findById(followers[i])
+            const index = follower.following.indexOf(userId)
+            follower.following.splice(index,1)
+            await follower.save()
+        }
+
+        //delete all following ke followers ki list associate with it 
+        const following = user.following
+        const userIdd = user._id
+        for(let i =0; i < following.length; i++){
+            const follows = await User.findById(following[i])
+            const index = follows.followers.indexOf(userIdd)
+            follows.followers.splice(index,1)
+            await follows.save()
+        }
+        
+
+        //logging out user after delteing profile 
+        res.cookie("token",null,
+        {expires: new Date(Date.now()),
+        httpOnly:true})
+
+        return res.status(200).json({
+            sucess:true,
+            message:"PROFILE DELETED along with all posts"
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+
+-->
+
+from User.js 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile, deleteUser } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+router.route("/delete/me").delete(isAuthenticated, deleteUser)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/delete/me
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "PROFILE DELETED along with all posts"
+}
+
+
+
+
+now making of myProfile getting information 
+from User.js/controllers
+<!--
+//myProfile 
+exports.myProfile = async(req,res) => {
+    try {
+        
+        const user = await User.findById(req.user._id).populate("posts")
+        
+        return res.status(200).json({
+            sucess:true,
+            message:"Showing Profile",
+            user
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from User.js/routes 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile, deleteUser, myProfile } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+router.route("/delete/me").delete(isAuthenticated, deleteUser)
+router.route("/me").get(isAuthenticated, myProfile)
+
+module.exports = router
+-->
+
+now go to postman and make an new request :http://localhost:4000/api/v1/me
+and u will get this as an output:
+{
+    "sucess": true,
+    "message": "Showing Profile",
+    "user": {
+        "avatar": {
+            "url": "smapleurl"
+        },
+        "_id": "63fe08af3c5f7800fd7c00a7",
+        "name": "Shub23ham",
+        "email": "abcd@gmail.com",
+        "posts": [
+            {
+                "_id": "63fe08cedd351a7a495c4dc9",
+                "caption": "12345",
+                "owner": "63fe08af3c5f7800fd7c00a7",
+                "likes": [],
+                "createdAt": "2023-02-28T13:59:42.902Z",
+                "comments": [],
+                "__v": 0
+            },
+            {
+                "_id": "63fe08cfdd351a7a495c4dce",
+                "caption": "12345",
+                "owner": "63fe08af3c5f7800fd7c00a7",
+                "likes": [],
+                "createdAt": "2023-02-28T13:59:43.491Z",
+                "comments": [],
+                "__v": 0
+            },
+            {
+                "_id": "63fe08cfdd351a7a495c4dd3",
+                "caption": "12345",
+                "owner": "63fe08af3c5f7800fd7c00a7",
+                "likes": [],
+                "createdAt": "2023-02-28T13:59:43.879Z",
+                "comments": [],
+                "__v": 0
+            }
+        ],
+        "followers": [],
+        "following": [],
+        "__v": 3
+    }
+}
+
+
+2
+
+now making of getUserProfile and get AllUserProfile
+from User.js/controllers 
+<!--
+    //userProfile 
+exports.getUserProfile = async(req,res) => {
+    try {
+        
+        const user = await User.findById(req.params.id).populate("posts")
+        
+        if(!user){
+            res.status(500).json({
+                sucess:false,
+                message:"User not found"
+            })
+        }
+
+        return res.status(200).json({
+            sucess:true,
+            message:"Showing User Profile",
+            user
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+
+
+
+//getting all users 
+exports.getAllUserProfile = async(req,res) => {
+    try {
+        
+        const users = await User.find({})
+
+        return res.status(200).json({
+            sucess:true,
+            message:"Showing All User Profile",
+            users
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+    
+from User.js/routes 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile, deleteUser, myProfile, getUserProfile, getAllUserProfile } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+router.route("/delete/me").delete(isAuthenticated, deleteUser)
+router.route("/me").get(isAuthenticated, myProfile)
+router.route("/user/:id").get(isAuthenticated, getUserProfile)
+router.route("/users").get(isAuthenticated, getAllUserProfile)
+
+module.exports = router
+-->
+
+PART 1 COMPLETE 
+
+making of addComment 
+from Post.js/controllers 
+<!--
+    //adding comments 
+exports.addUpdateComments = async(req,res) => {
+    try {
+       
+        const post = await Post.findById(req.params.id)
+
+        if(!post){
+            res.status(500).json({
+                sucess:false,
+                message:"post not found"
+            })
+        }
+        //this is for adding comment
+        // post.comments.push({
+        //     user:req.user._id,
+        //     comment:req.body.comment
+        // })
+
+
+        //this is for adding and updating comment 
+        let commentExists = -1
+        //this is for checking if comment already exists 
+        post.comments.forEach((item,index) => {
+            if(item.user.toString() === req.user._id.toString()){
+                commentExists = index
+            }
+        })
+
+        if(commentExists !== -1){
+            post.comments[commentExists].comment = req.body.comment 
+            await post.save() 
+            return res.status(200).json({
+                success:true,
+                message:"Comment updated"
+            })
+        }
+        else{
+            post.comments.push({
+                user:req.user._id,
+                comment:req.body.comment
+            })
+            await post.save()
+            return res.status(200).json({
+                success:true,
+                message:"Comment added"
+            })
+        }
+        
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from post.js/routes 
+<!--
+    const express = require("express")
+const { createPost, likeandUnlikePost, deletePost, getPostFollowing, updateCaptions, addUpdateComments } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").get(isAuthenticated,likeandUnlikePost)
+router.route("/post/:id").delete(isAuthenticated,deletePost)
+router.route("/posts").get(isAuthenticated,getPostFollowing)
+router.route("/post/:id").put(isAuthenticated, updateCaptions)
+router.route("/post/comment/:id").put(isAuthenticated, addUpdateComments)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/post/comments/post ka id 
+and u will get this as an output:
+{
+    "comment":"hello world king"
+}
+and output will be :
+{
+    "success": true,
+    "message": "Comment updated"
+}
+
+
+
+
+now making of deleteComment 
+from Post.js/controllers 
+<!--
+    
+//deletecomment
+exports.deleteComments = async(req,res) => {
+    try {
+        const post = await Post.findById(req.params.id)//this is for fingding post ka id
+
+        if(!post){
+            res.status(500).json({
+                sucess:false,
+                message:"post not found"
+            })
+        }
+
+
+        //for owner ke comments 
+        if (post.owner.toString() === req.user._id.toString()) {
+
+            if(req.body.commentId === undefined){
+                res.status(500).json({
+                    sucess:false,
+                    message:"commentId is wrong"
+                })
+            }
+
+            post.comments.forEach((item,index) => {
+                if(item._id.toString() === req.body.commentId.toString()){
+                   return post.comments.splice(index,1)
+                }
+            })
+            await post.save() 
+            return res.status(200).json({
+                success:true,
+                message:"Selecetd Comment has Deleted"
+            })
+        } 
+        //for followers comments 
+        else {
+            post.comments.forEach((item,index) => {
+                if(item.user.toString() === req.user._id.toString()){
+                   return post.comments.splice(index,1)
+                }
+            })
+            await post.save() 
+            return res.status(200).json({
+                success:true,
+                message:"Your Comment Deleted"
+            })
+        }
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+
+from Post.js/routes 
+<!--
+    const express = require("express")
+const { createPost, likeandUnlikePost, deletePost, getPostFollowing, updateCaptions, addUpdateComments, deleteComments } = require("../Controllers/Post")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/post/upload").post(isAuthenticated,createPost)
+router.route("/post/:id").get(isAuthenticated,likeandUnlikePost)
+router.route("/post/:id").delete(isAuthenticated,deletePost)
+router.route("/posts").get(isAuthenticated,getPostFollowing)
+router.route("/post/:id").put(isAuthenticated, updateCaptions)
+router.route("/post/comment/:id").put(isAuthenticated, addUpdateComments)
+router.route("/post/comment/delete/:id").delete(isAuthenticated, deleteComments)
+
+module.exports = router
+-->
+now go to postman and make an new request :http://localhost:4000/api/v1/post/comments/post ka id 
+and u will get this as an output:
+and output will be :
+{
+    "success": true,
+    "message": "Comment delted"
+}
+
+
+
+
+now lets make forgot Password and reset password 
+for that we want to install npm i nodemailer 
+now lets make an token for forgetting password so that we will get an link for resetting password 
+from User.js/models 
+<!--
+    const crypto = require("crypto")
+    const UserSchema = new mongoose.Schema({
+    //this is for users informaton what we wnat
+    name:{
+        type:String,
+        required:[true,"Please Enter your FullName"]
+    },
+    email:{
+        type:String,
+        required:[true,"Please Enter your Email"],
+        unique:[true,"Email already exist"]
+    },
+    password:{
+        type:String,
+        required:[true,"Please Enter Pasword"],
+        minlength:[4,"Password should be of 4 letters/number/etc"],
+        select:false,
+    },
+    posts:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Post',
+    }],
+    followers:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+    }],
+    following:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+    }],
+    avatar:{
+        publiv_id:String,
+        url:String
+    },
+    resetPasswordToken:String,
+    resetPasswordExpire:Date,
+})
+
+//for resetPassword ka ttoken ke liye
+UserSchema.methods.getResetPasswordToken = function (){
+    const resetToken = crypto.randomBytes(20).toString("hex")
+    this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex")
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    return resetToken;
+}
+
+-->
+
+from User.js/controllers 
+<!--
+    
+//for forgetting and reseting password
+exports.forgotPassword = async(req,res) => {
+    try {
+        
+        const user = await User.findOne({email:req.body.email})
+        if(!user){
+            res.status(500).json({
+                sucess:false,
+                message:"User not found"
+            })
+        }
+
+        const resetPasswordToken = user.getResetPasswordToken()
+        await user.save()
+
+        const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetPasswordToken}`
+        const message = `Reset your password by clicking on the link : \n\n ${resetUrl}`
+        
+        try {
+            await sendEmail({
+                email:user.email,
+                subject:"Reset Password",
+                message
+            })
+            return res.status(200).json({
+                sucess:true,
+                message:`email sent to ${user.email}`
+            })
+        } 
+        catch (error) {
+            user.resetPasswordToken = undefined
+            user.resetPasswordExpire = undefined
+            await user.save() 
+            res.status(500).json({
+                sucess:false,
+                message:error.message
+            })
+        }
+
+
+    } catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+now mae an new file of SendEmail.js in middleawre 
+<!--
+    const nodemailer = require("nodemailer")
+
+    exports.sendEmail = async (options) => {
+        const transporter = nodemailer.createTransport({
+            //this is from mailtrap
+            host: "sandbox.smtp.mailtrap.io",
+            port: 2525,
+            auth: {
+                user: "b709c930585d02",
+                pass: "598df0e3d6914a"
+            }
+        })
+
+        const mailOptions = {
+            from:process.env.SMPT_MAIL,
+            to: options.email,
+            subject: options.subject,
+            text:options.message
+        }
+
+        await transporter.sendMail(mailOptions)
+    }
+-->
+for sending token we are gointg to use mailtrap maker an account there 
+
+from User/js/routes 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile, deleteUser, myProfile, getUserProfile, getAllUserProfile, forgotPassword } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+router.route("/delete/me").delete(isAuthenticated, deleteUser)
+router.route("/me").get(isAuthenticated, myProfile)
+router.route("/user/:id").get(isAuthenticated, getUserProfile)
+router.route("/users").get(isAuthenticated, getAllUserProfile)
+router.route("/forgot/password").post(isAuthenticated, forgotPassword)
+
+module.exports = router
+-->
+now go to postman and maek an new request of:http://localhost:4000/api/v1/forgot/password
+amd in body mail of login one :
+{
+    "email":"1@gmail.com"
+}
+the output will be
+{
+    "sucess": true,
+    "message": "email sent to 1@gmail.com"
+}
+
+now go to your mailtrap there u can see u will get an token like this =>
+Reset your password by clicking on the link : 
+http://localhost:4000/api/v1/password/reset/86136e024c6ec2cfca2fa681862562dc71faaf96
+
+
+since you get an poken now lets change password or reset passowrd
+from User.js/controllers
+<!--
+    
+const crypto = require("crypto")
+    //for resetting new pasword 
+exports.resetPassword = async(req,res) => {
+    try {
+        const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex")
+
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire:{$gt: Date.now()}
+        })
+
+        if(!user){
+            return  res.status(500).json({
+                sucess:false,
+                message:"Token is invalid or has expired"
+            })
+        }
+        
+        user.password = req.body.password
+        user.resetPasswordToken = undefined
+        user.resetPasswordExpire = undefined
+        await user.save() 
+        res.status(200).json({
+            sucess:true,
+            message:"Password updated successfully"
+        })
+    } 
+    catch (error) {
+        res.status(500).json({
+            sucess:false,
+            message:error.message
+        })
+    }
+}
+-->
+
+from User.js/router 
+<!--
+    const express = require("express")
+const { register, login, followUser, loggedOut, updatePassword, updateProfile, deleteUser, myProfile, getUserProfile, getAllUserProfile, forgotPassword, resetPassword } = require("../Controllers/User")
+const { isAuthenticated } = require("../Middleware/Auth")
+
+const router = express.Router()
+
+router.route("/register").post(register)
+router.route("/login").post(login)
+router.route("/follow/:id").get(isAuthenticated, followUser)
+router.route("/logout").get(isAuthenticated, loggedOut)
+router.route("/update/password").put(isAuthenticated, updatePassword)
+router.route("/update/profile").put(isAuthenticated, updateProfile)
+router.route("/delete/me").delete(isAuthenticated, deleteUser)
+router.route("/me").get(isAuthenticated, myProfile)
+router.route("/user/:id").get(isAuthenticated, getUserProfile)
+router.route("/users").get(isAuthenticated, getAllUserProfile)
+router.route("/forgot/password").post(isAuthenticated, forgotPassword)
+router.route("/password/reset/:token").put(isAuthenticated, resetPassword)
+
+module.exports = router
+-->
+now go to mailtrapthen there u will get the link copt that and paste that in new request of postman : http://localhost:4000/api/v1/password/reset/1e1d41c8cfc5d7307fdb40859a5e813f5bd84d01
+now in body:
+{
+    "password":"password"
+}
+now output will be :
+{
+    "sucess": true,
+    "message": "Password updated successfully"
+}
+
+
+PART2 is completed 
+and Backend 90% is completed 
+
+
+
+
+<center>
+    <h3><b>FRONTEND</b></h3>
+</center>
+
+lets install react in frontend folder 
+npx create-react-app .
+npm i @mui/material @mui/icons-material
+npm i react-router-dom
+to run : npm start 
+
+
+now lets start making with components 
+we are going to use Boostrap for that so that we dont have to use many css 
+so paste this in index.html file 
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css" integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA==" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+
+
+lets make an Header page with Header.jsx and Header.css and import that in App.js
+from Header.jsx
+<!--
+    import React, { useState } from 'react'
+import "./Header.css"
+import { Link } from 'react-router-dom'
+//Link is used for getting to that page when clicking instaed of using a tag its easy to use 
+
+const Header = () => {
+
+    const [tab,setTab] = useState(window.location.pathname)
+    //window.location.pathname iske baje se wahi location rahegi refresh ke baad bhi 
+  return (
+    <>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div className="container-fluid">
+        {/* <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span> 
+        </button> */}
+        <div className="collapse navbar-collapse" id="navbarNav">
+        <ul className="navbar-nav">
+            <li className="nav-item">
+                <Link className='nav-link active' to="/" onClick={() => setTab("/")}>
+                    {
+                        tab === "/" ? <p>Home</p> : <p>Home</p>
+                    }
+                </Link>
+            </li>
+            <li className="nav-item">
+                <Link className='nav-link active' to="/newpost" onClick={() => setTab("/newpost")}>
+                    {
+                        tab === "/newpost" ? <p>Newpost</p> : <p>Newpost</p>
+                    }
+                </Link>
+            </li>
+            <li className="nav-item">
+                <Link className='nav-link active' to="/search" onClick={() => setTab("/search")}>
+                    {
+                        tab === "/search" ? <p>Search</p> : <p>Search</p>
+                    }
+                </Link>
+            </li>
+            <li className="nav-item">
+                <Link className='nav-link active' to="/account" onClick={() => setTab("/account")}>
+                    {
+                        tab === "/account" ? <p>Account</p> : <p>Account</p>
+                    }
+                </Link>
+            </li>
+        </ul>
+        </div>
+    </div>
+    </nav>
+    </> 
+  )
+}
+
+export default Header
+-->
+
+
+
+
+so now to make that we have to install redux tools 
+npm i @reduxjs/toolkit react-redux axios  
+
+now make Actions, Reducers folder in src and Store.js file 
+now in Store.js 
+<!--
+    import {configureStore} from "@reduxjs/toolkit"
+
+const initialState = {}
+
+const store = configureStore(initialState, {
+    reducer:{}
+})
+
+export default store
+-->
+
+from index.js 
+<!--import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { Provider } from 'react-redux';
+import store from './Store';
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>
+);
+-->
+
+now lets make an reducer of name User.js in Reducer folder
+in that we have to make for login,register and load users of reuest,success,failure \
+note : installl redux devtools extension so that u can see is ur backend working with frontend or not 
+
+now lets make required setup for login, register and loaduser
+from User.js/reducers
+<!--
+    import {createReducer} from "@reduxjs/toolkit"
+const initialState = {}
+
+export const userReducer = createReducer(initialState, {
+    //for login
+    loginRequest: (state,action) => {
+        state.loading = true
+    },
+    loginSuccess: (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    loginFailure: (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+
+
+
+    //for register
+    RegisterRequest : (state,action) => {
+        state.loading = true
+    },
+    RegisterSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    RegisterFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+
+
+
+    //for loading user
+    LoadUserRequest : (state,action) => {
+        state.loading = true
+    },
+    LoadUserSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    LoadUserFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+})
+-->
+
+from Store.js 
+<!--
+    import {configureStore} from "@reduxjs/toolkit"
+import { userReducer } from "./Reducers/User"
+
+// const initialState = {}
+
+const store = configureStore({
+    reducer:{
+        user:userReducer
+    }
+})
+
+export default store
+-->
+
+now lets make login page for that make an componete folder login page 
+we are going to use bootstrap login page 
+we have to make an api request of login and then after getting that data we have to dispatch that data in User.js/reducer 
+we will fo this in Actions folder in User.js file 
+
+from Login.jsx
+<!--
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import {useDispatch} from "react-redux"
+import { LoginUser } from '../../Actions/User'
+
+const Login = () => {
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+
+    //after making api reuest in User.js/actions 
+    const dispatch = useDispatch()
+
+    const loginHandler = (e) => {
+        e.preventDefault()//this is for prevennting submiting form 
+        dispatch(LoginUser(email,password))//after getting api this will dispatch login data
+    }
+
+  return (
+    <>
+        <form className='position-relative' onSubmit={loginHandler}>
+            <div className="position-absolute top-50 start-50">
+                <div className="mb-3">
+                    <label for="exampleInputEmail1" className="form-label">Email address</label>
+                    <input type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" 
+                    required value={email} 
+                    onChange={(e) => setEmail(e.target.value)}/>
+                    <div id="emailHelp" className="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                <div className="mb-3">
+                    <label for="exampleInputPassword1" className="form-label">Password</label>
+                    <input type="password" className="form-control" id="exampleInputPassword1" required 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Link to="/forgot/password"><p>Forgot Password</p></Link>
+                <Link to="/register"><p>New User</p></Link>
+                <button type="submit" className="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </>
+  )
+}
+
+export default Login
+-->
+
+from App.js 
+<!--import './App.css';
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
+import Header from './Components/Header/Header';
+import Login from './Components/Login/Login';
+
+function App() {
+  return (
+    <Router>
+      <Header/>
+      
+      <Routes>
+        <Route path="/" element={<Login/>}/>
+      </Routes>
+
+    </Router>
+  );
+}
+
+export default App;
+-->
+
+
+from User.js/actions
+<!--
+import axios from "axios"
+
+//getting api data and dispatching it for login process
+//this is making of api request
+export const LoginUser = (email,password) => async (dispatch) => {
+    try {
+        //for request
+        dispatch({
+            type:"LoginRequest"
+        })
+        const { data } = await axios.post("/api/v1/login", {email,password},{
+            ///api/v1/login comes from our backend postman login request
+            headers:{
+                "Content-Type":"application/json"
+            }
+        })
+
+        //for success
+        dispatch({
+            type:"LoginSuccess",
+            payload: data.user
+        })
+    } 
+    catch (error) {
+        dispatch({
+            type:"LoginFailure",
+            payload:error,
+        })
+    }
+}
+-->
+
+
+from Package.json /frontend
+<!--
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy":"http://localhost:4000"
+}
+-->
+
+
+to run in frontend: npm start
+in backend : npm run dev 
+
+now after sending data ie filling our login form with the existing data that is already present in mongodbcompass we will loginafter that for output u can see in inscepct mode in application and in that in cookirs u can see token is generated 
+and if u downlaoded reduc extension u can see there in LoginSuccess 
+
+
+
+
+now making of LoadUser
+this is for if we refresh our page after logingin in then we have token so we dont have to login once again we can browse 
+this is used for unless we logout the tpoken will be remailed
+for now we are not doing this 
+
+
+
+
+now lets make home Page
+
+
+
+<center><h5>DUE TO ERROR I AM ONCE AGAIN MAKING BY FRONTEND PART </h5></center>
+
+
+lets install react and its required dependicied from above 
+
+now lets make an Header page in Components folder 
+from Header.jsx 
+<!--
+    import React,{useState} from 'react'
+import { Link } from 'react-router-dom'
+//Link is used for getting to that page when clicking instaed of using a tag its easy to use
+
+const Header = () => {
+
+    const [tab,setTab] = useState(window.location.pathname)
+    //window.location.pathname iske baje se wahi location rahegi refresh ke baad bhi
+
+  return (
+    <>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div className="container-fluid">
+        {/* <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span> 
+        </button> */}
+        <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav">
+                <li className="nav-item">
+                    <Link className='nav-link active' to="/" onClick={() => setTab("/")}>
+                        {
+                            tab === "/" ? <p>Home</p> : <p>Home</p>
+                        }
+                    </Link>
+                </li>
+                <li className="nav-item">
+                    <Link className='nav-link active' to="/newpost" onClick={() => setTab("/newpost")}>
+                        {
+                            tab === "/newpost" ? <p>Newpost</p> : <p>Newpost</p>
+                        }
+                    </Link>
+                </li>
+                <li className="nav-item">
+                    <Link className='nav-link active' to="/search" onClick={() => setTab("/search")}>
+                        {
+                            tab === "/search" ? <p>Search</p> : <p>Search</p>
+                        }
+                    </Link>
+                </li>
+                <li className="nav-item">
+                    <Link className='nav-link active' to="/account" onClick={() => setTab("/account")}>
+                        {
+                            tab === "/account" ? <p>Account</p> : <p>Account</p>
+                        }
+                    </Link>
+                </li>
+            </ul>
+        </div>
+    </div>
+    </nav>
+    </> 
+  )
+}
+
+export default Header
+-->
+
+from App.js 
+<!--import './App.css';
+import { BrowserRouter as Router } from 'react-router-dom';
+import Header from './Components/Header/Header';
+
+function App() {
+  return (
+    <Router>
+      <Header/>
+    </Router>
+  );
+}
+
+export default App;
+-->
+
+
+
+so now to make that we have to install redux tools 
+npm i @reduxjs/toolkit react-redux axios  
+
+now make Actions, Reducers folder in src and Store.js file 
+now in Store.js 
+
+now lets make an reducer of name User.js in Reducer folder
+in that we have to make for login,register and load users of reuest,success,failure \
+note : installl redux devtools extension so that u can see is ur backend working with frontend or not 
+
+now lets make required setup for login, register and LoadUser
+
+from Store.js 
+<!--
+import {configureStore} from "@reduxjs/toolkit"
+import { userReducer } from "./Reducers/UserReducer"
+
+// const initialState = {}
+
+const store = configureStore({
+    reducer:{
+        user:userReducer
+    }
+})
+
+export default store
+-->
+
+from index.js 
+<!--
+    import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import { Provider } from 'react-redux';
+import store from './store';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById(root)
+);
+
+-->
+
+from UserReducer.js/reducers 
+<!--
+    import {createReducer} from "@reduxjs/toolkit"
+const initialState = {}
+
+export const userReducer = createReducer(initialState, {
+    //for login
+    LoginRequest: (state,action) => {
+        state.loading = true
+    },
+    LoginSuccess: (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    LoginFailure: (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+
+
+
+    //for register
+    RegisterRequest : (state,action) => {
+        state.loading = true
+    },
+    RegisterSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    RegisterFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+
+
+
+    //for loading user
+    LoadUserRequest : (state,action) => {
+        state.loading = true
+    },
+    LoadUserSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+    },
+    LoadUserFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+    },
+})
+-->
+
+
+now make an login componentes and login.jsx file 
+now lets make login page for that make an componete folder login page 
+we are going to use bootstrap login page 
+we have to make an api request of login and then after getting that data we have to dispatch that data in User.js/reducer 
+we will fo this in Actions folder in User.js file 
+
+from Login.jsx
+<!--
+    import React from 'react'
+import { Link } from 'react-router-dom'
+
+const Login = () => {
+  return (
+    <>
+        <form className='position-relative'>
+            <div class="position-absolute top-0 start-50">
+                <div className="mb-3">
+                    <label for="exampleInputEmail1" className="form-label">Email address</label>
+                    <input type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"/>
+                </div>
+                <div className="mb-3">
+                    <label for="exampleInputPassword1" className="form-label">Password</label>
+                    <input type="password" className="form-control" id="exampleInputPassword1"/>
+                </div>
+                <Link to="/forgot/password"><p>forgot password?</p></Link>
+                <Link to="/register"><p>New user</p></Link>
+                <button type="submit" className="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </>
+  )
+}
+
+export default Login
+-->
+
+from App.js 
+<!--
+    import './App.css';
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
+import Header from './Components/Header/Header';
+import Login from './Components/Login/Login';
+
+function App() {
+  return (
+    <Router>
+      <Header/>
+
+      <Routes>
+        <Route path="/" element={<Login/>}/>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+-->
+
+now get the login user data in frontend part of console ie in redux and application ie in cookies ie generation of token 
+from login.jsx 
+<!--
+    import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import {useDispatch} from "react-redux"
+import { loginUser } from '../../Actions/User'
+
+
+
+const Login = () => {
+
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+
+    //after making api reuest in User.js/actions 
+    const dispatch = useDispatch()
+
+    const loginHandler = (e) => {
+        e.preventDefault()//this is for prevennting submiting form
+        dispatch(loginUser(email,password))//after getting api this will dispatch login data 
+    }
+
+  return (
+    <>
+        <form className='position-relative' onSubmit={loginHandler}>
+            <div class="position-absolute top-0 start-50">
+                <div className="mb-3">
+                    <label for="exampleInputEmail1" className="form-label">Email address</label>
+                    <input type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)}/>
+                </div>
+                <div className="mb-3">
+                    <label for="exampleInputPassword1" className="form-label">Password</label>
+                    <input type="password" className="form-control" id="exampleInputPassword1" value={password} 
+                    onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Link to="/forgot/password"><p>forgot password?</p></Link>
+                <Link to="/register"><p>New user</p></Link>
+                <button type="submit" className="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </>
+  )
+}
+
+export default Login
+-->
+from User.js/actions
+<!--
+    import axios from "axios"
+
+//getting api data and dispatching it for login process
+//this is making of api request
+export const loginUser = (email,password) => async (dispatch) => {
+    try {
+        //for request
+        dispatch({
+            type:"LoginRequest"
+        })
+        const { data } = await axios.post("/api/v1/login", {email,password},{
+            ///api/v1/login comes from our backend postman login request
+            headers:{
+                "Content-Type":"application/json"
+            }
+        })
+
+        //for success
+        dispatch({
+            type:"LoginSuccess",
+            payload: data.user
+        })
+    } 
+    catch (error) {
+        dispatch({
+            type:"LoginFailure",
+            payload:error,
+        })
+    }
+}
+-->
+
+from package.json 
+<!--
+     },
+  "proxy":"http://localhost:4000"
+}
+
+-->
+
+note jut split the terminal dont open new terminal okay for running frontend and backend 
+
+
+now making of load user 
+
+
+<center><h6>Mera above wala error ja chuka hai i guess kidr toh spelling mistake ho sakta hai guys </h6></center>
+
+
+this is final code:
+from Login.jsx 
+<!--import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import {useDispatch} from "react-redux"
+import { loginUser } from '../../Actions/User'
+
+
+
+const Login = () => {
+
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+
+    //after making api reuest in User.js/actions 
+    const dispatch = useDispatch()
+
+    const loginHandler = (e) => {
+        e.preventDefault()//this is for prevennting submiting form
+        dispatch(loginUser(email,password))//after getting api this will dispatch login data 
+    }
+
+  return (
+    <>
+        <form className='position-relative' onSubmit={loginHandler}>
+            <div class="position-absolute top-0 start-50">
+                <div className="mb-3">
+                    <label for="exampleInputEmail1" className="form-label">Email address</label>
+                    <input type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)}/>
+                </div>
+                <div className="mb-3">
+                    <label for="exampleInputPassword1" className="form-label">Password</label>
+                    <input type="password" className="form-control" id="exampleInputPassword1" value={password} 
+                    onChange={(e) => setPassword(e.target.value)}/>
+                </div>
+                <Link to="/forgot/password"><p>forgot password?</p></Link>
+                <Link to="/register"><p>New user</p></Link>
+                <button type="submit" className="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </>
+  )
+}
+
+export default Login-->
+
+from User.js/actions 
+<!--import axios from "axios"
+
+//getting api data and dispatching it for login process
+//this is making of api request
+export const loginUser = (email,password) => async (dispatch) => {
+    try {
+        //for request
+        dispatch({
+            type:"LoginRequest"
+        })
+        const { data } = await axios.post("/api/v1/login", {email,password},{
+            ///api/v1/login comes from our backend postman login request
+            headers:{
+                "Content-Type":"application/json"
+            }
+        })
+
+        //for success
+        dispatch({
+            type:"LoginSuccess",
+            payload: data.user
+        })
+    } 
+    catch (error) {
+        dispatch({
+            type:"LoginFailure",
+            payload:error,
+        })
+    }
+}
+
+
+
+//loadUser
+export const loadUser = () => async (dispatch) => {
+    try {
+        //for request
+        dispatch({
+            type:"LoadUserRequest"
+        })
+        const { data } = await axios.get("/api/v1/me")
+
+        //for success
+        dispatch({
+            type:"LoadUserSuccess",
+            payload: data.user
+        })
+    } 
+    catch (error) {
+        dispatch({
+            type:"LoadUserFailure",
+            payload:error,
+        })
+    }
+}-->
+
+
+from UserReducer.js 
+<!--
+    import {createReducer} from "@reduxjs/toolkit"
+const initialState = {
+    isAuthenticated:false,
+}
+
+export const userReducer = createReducer(initialState, {
+    //for login
+    LoginRequest: (state,action) => {
+        state.loading = true
+    },
+    LoginSuccess: (state,action) => {
+        state.loading = false
+        state.user = action.payload
+        state.isAuthenticated = true
+    },
+    LoginFailure: (state,action) => {
+        state.loading = false
+        state.error = action.payload
+        state.isAuthenticated = false
+    },
+
+
+
+    //for register
+    RegisterRequest : (state,action) => {
+        state.loading = true
+    },
+    RegisterSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+        state.isAuthenticated = true
+    },
+    RegisterFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+        state.isAuthenticated = false
+    },
+
+
+
+    //for loading user
+    LoadUserRequest : (state,action) => {
+        state.loading = true
+    },
+    LoadUserSuccess : (state,action) => {
+        state.loading = false
+        state.user = action.payload
+        state.isAuthenticated = true
+    },
+    LoadUserFailure : (state,action) => {
+        state.loading = false
+        state.error = action.payload
+        state.isAuthenticated = false
+    },
+})
+-->
+
+
+from App.js 
+<!--
+    import './App.css';
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom"
+import Header from './Components/Header/Header';
+import Login from './Components/Login/Login';
+import { useEffect } from 'react';
+import { loadUser } from './Actions/User';
+import { useDispatch, useSelector } from 'react-redux';
+
+function App() {
+  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(loadUser())
+  }, [])
+
+  const {isAuthenticated} = useSelector((state) => state.user)
+  
+  return (
+    <Router>
+      {isAuthenticated && <Header/>}
+
+      <Routes>
+        <Route path="/" element={<Login/>}/>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+-->
+
+
+
+now lets make an Home componenets and lets add post in it 
+create Home.jsx and Home.css 
+nowe lets bring user data ie name,avatar, id 
+from Home.jsx 
+<!--import React from 'react'
+import "./Home.css"
+import User from "../User/User"
+
+const Home = () => {
+  return (
+    <>
+        <div className="home">
+            <div className="h-left"></div>
+
+
+            {/* in this section we have to show user */}
+            <div className="h-right">
+                <User userId={"user._id"} name={"user.name"} avatar={"user.avatar.url"}/>
+            </div>
+        </div>
+    </>
+  )
+}
+
+export default Home-->
+
+from Home.css 
+<!--
+    .home{
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    height: 100vh;
+}
+
+.h-left{
+    background-image: linear-gradient(to right, pink,lightyellow);
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.h-right{
+    padding: 2rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.homeUser{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-decoration: none;
+    color: #000;
+}
+
+.homeUser > img{
+    height: 4rem;
+    width: 4rem;
+    margin: 1rem;
+    border-radius: 100%;
+}
+-->
+
+from User.jsx 
+<!--import React from 'react'
+import "../Home/Home.css"
+import { Link } from 'react-router-dom'
+
+const User = ({userId,name,avatar}) => {
+  return (
+    <>
+        <Link className="homeUser" to={`/user/${userId}`}>
+            <img src={avatar} alt="" />
+            <h6>{name}</h6>
+        </Link>
+    </>
+  )
+}
+
+export default User-->
+
+now lets bring all users post 
+
+
+<h2>The FRONTEND is not integrating with Backend the way i want but the backend is working as perfect</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
